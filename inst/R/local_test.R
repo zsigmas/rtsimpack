@@ -14,7 +14,9 @@
 
 #' #' TESTING SIMULATION LOOP
 #'
-d = get_dummy_df(2,3,10)
-d = rtsimpack::compute_pp(d)
-d = compute_agg(d)
+ni = 1
+np = 3
+ntc = 10
+d = get_dummy_df(ni,np,ntc) %>% dplyr::select(-iter)
+d = rtsimpack::compute_one_iteration(d, ni, np, ntc)
 #'

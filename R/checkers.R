@@ -8,5 +8,10 @@ check_ntrial = function(d){
   nt = d %>% dplyr::group_by(iter, id) %>%
     dplyr::summarise(n = dplyr::n()) %>%
     dplyr::pull(n)
-  return(all(nt==nt[1]))
+
+  if(all(nt==nt[1])){
+    return(nt[1])
+  }else{
+    return(NA)
+  }
 }

@@ -15,6 +15,7 @@
 #'
 
 shuffle_cond = function(d, ni, np, ntc){
+  a=1
   d[['condition']] = unlist(lapply(1:np*ni, function(x){sample(rep(c('A', 'B'), ntc))}))
   return(d)
 }
@@ -57,9 +58,10 @@ compute_agg = function(d){
 compute_test  = function(d){
   np = nrow(d)/length(unique(d[['iter']])) # Number of participants, maybe pass as parameter
   t_test_part = purrr::partial(t_test, np=np)
-  x = d %>% group_by(iter, id) %>%
-    summarise_if(is.numeric, .funs = list(~(.[1]-.[2]))) %>%
-    group_by(iter) %>% summarise_all(t_test_part)
+  x = d %>% dplyr::group_by(iter, id) %>%
+    dplyr::summarise_if(is.numeric, .funs = list(~(.[1]-.[2]))) %>%
+    dplyr::group_by(iter) %>%
+    dplyr::summarise_all(t_test_part)
 }
 
 t_test = function(x, np){
@@ -76,17 +78,28 @@ t_test = function(x, np){
 #'
 #'
 
-compute_one_iteration = function(d){
-  d = shuffle_cond(d)
+compute_one_iteration = function(d, ni, np, ntc, ids){
+  d = sample_data(d, ni, np, ids)
+  d = shuffle_cond(d, ni, np, ntc)
   d = compute_pp(d)
   d = compute_agg(d)
   d = compute_test(d)
   return(d)
 }
 
-sample_data = function(x, d, np, ids){
-  s =
+sample_data = function(d, ni, np, ids, replace_id=TRUE){
+   s = data.frame(iter = rep(1:ni, times=1, each=np),
+                  id = sample(ids, np, replace = TRUE),
+                  nid = rep(1:np, times=ni))
+   s = dplyr::inner_join(s, d, by='id')
+   if(replace_id){
+     s = dplyr::mutate(s, id=nid)
+   }
+   s = dplyr::select(s, -nid)
+   return(s)
 }
+
+
 
 get_ids = function(d){
   return(unique(d[['id']]))
@@ -96,16 +109,18 @@ get_ids = function(d){
 run_simulation = function(file, ni, np, nipi){
 
   d = readr::read_csv(file = file, col_types = 'illi') %>%
-    dplyr::select(rt_raw, id)
+    dplyr::select(rt_raw, id) %>%
+    dplyr::mutate(rt_log = log(rt_raw),
+                  rt_inv = 1/rt_raw)
+
+  ntc = check_ntrial(d)
+  stopifnot(!is.na(ntc))
 
   ids = get_ids(d)
-
-  s = dplyr::bind_rows(pbapply::pblapply(1:nipi, function(x, d, np){
-
-  }))
-
-  #Run iteration
-
-  #Save iteration
-
+  r = pbapply::pblapply(1:round(ni/nipi),
+                        function(x, d, ni, np, ntc, ids){
+                          oi = compute_one_iteration(d, ni, np, ntc, ids)
+                          return(oi)
+                        },d=d, ni=nipi, np=np, ntc=ntc, ids=ids)
+  r = dplyr::bind_rows(r)
 }
