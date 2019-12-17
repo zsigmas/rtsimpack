@@ -2,10 +2,37 @@
 % Please edit documentation in R/simulation.R
 \name{shuffle_cond}
 \alias{shuffle_cond}
-\title{Shuffle condition labels by iteration and parcitipant}
+\title{Adds shuffled condition}
 \usage{
-shuffle_cond(d)
+shuffle_cond(d, ni, np, ntc)
+}
+\arguments{
+\item{d}{a dataset to which a shuffled condition variable will be added}
+
+\item{ni}{the number of iterations included in the dataframe}
+
+\item{np}{the number of participants included in the dataframe}
+
+\item{ntc}{number of trials per condition}
 }
 \description{
-Recieves a dataframe with at least the columns id, iter and condition
+This function add a condition variable that contains random condition labels to a dataframe.
+}
+\details{
+The condition labels will be c('A', 'B'). As it is used in a simulation environment this labels are arbitrary.
+
+It assumes:
+
+
+\itemize{
+  \item The same number of participants across iterations
+  \item The same number of trials across all participants
+  \item The same number of trials per condition
+  \item That the dataframe is sorted by iteration and participant (It would be enough for each participant to be in consecutive rows)
+  \item An even number of trials in the whole participant. (Must be if it has two conditions and the same number of trials per condition)#'
+}
+}
+\examples{
+ shuffle_cond(d, ni, np, ntc)
+
 }

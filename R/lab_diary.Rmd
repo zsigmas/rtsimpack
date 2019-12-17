@@ -1,0 +1,36 @@
+---
+title: "RTsimpack Diary"
+author: "Luis Morís"
+date: "16/12/2019"
+
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 16.12.2019 RTSim as package
+
+I have decided to move all the development of this simulation into a package.
+
+There is now a functional version of it. Initially everything is correct, but some testing is needed.
+
+For 100.000 iterations on Stroop approximately 1.2 hours are needed.
+
+We need to add the option of running in parallel, and the option of running in the cluster using slurm, it seems like drake has an option for that.
+
+We also need to learn how to build and deploy the package in the cluster as well as packing the data in drake.
+
+We need to move the data into the inst directory, as well as save as csv/feathers, and check that the naming of the variables is correct.
+
+We also need to start developing the drake pipeline, but given the functions already available in the package that should be easy.
+
+Check on static branching which seems a good option to run our work.
+
+#17.12.2019
+Everything is now documented.

@@ -36,3 +36,27 @@ test_that("T test works",{
   p_ours = t_test(x, np)
   expect_equal(p_base, p_ours, tolerance=1e-3)
 })
+
+test_that('Getting number of trials',
+          {
+            same_it_even = expand.grid(id=1:3, iter=1:2, t=1:10)
+            same_no_it_even = expand.grid(id=1:3, t=1:10)
+            same_it_odd = expand.grid(id=1:3, iter=1:2, t=1:7)
+            same_no_it_odd = expand.grid(id=1:3, t=1:7)
+            diff_it_even = dplyr::bind_rows(expand.grid(id=1:3, iter=1:2, t=1:10),
+                                       expand.grid(id=1:2, iter=1:2, t=1:10))
+            diff_no_it_even = dplyr::bind_rows(expand.grid(id=1:3, iter=1:2, t=1:10),
+                                            expand.grid(id=1:2, iter=1:2, t=1:10))
+            diff_it_odd = dplyr::bind_rows(expand.grid(id=1:3, iter=1:2, t=1:10),
+                                            expand.grid(id=1:2, iter=1:2, t=1:7))
+            diff_no_it_odd = dplyr::bind_rows(expand.grid(id=1:3, iter=1:2, t=1:10),
+                                               expand.grid(id=1:2, iter=1:2, t=1:7))
+            expect_equal(get_ntc(same_it_even), 5)
+            expect_equal(get_ntc(same_no_it_even), 5)
+            expect_error(get_ntc(same_it_odd))
+            expect_error(get_ntc(same_no_it_odd))
+            expect_error(get_ntc(diff_it_even))
+            expect_error(get_ntc(diff_no_it_even))
+            expect_error(get_ntc(diff_it_odd))
+            expect_error(get_ntc(diff_no_it_odd))
+          })
