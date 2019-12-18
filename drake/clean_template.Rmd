@@ -1,0 +1,88 @@
+---
+output:
+  html_document:
+    df_print: paged
+params:
+  p_target_nt: 10
+  p_dataset_name: "dataset_name"
+  p_dirty_df: !r data.frame(rt_raw=rnorm(40), id=rep(1:4,10))
+  p_clean_df: !r data.frame(rt_raw=rnorm(40), id=rep(5:8,10))
+title: "Cleaning `r params$p_dataset_name` dataset"
+
+---
+
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+library(cowplot)
+library(kableExtra)
+library(ggthemes)
+library(magrittr)
+library(dplyr)
+
+d_dirty = params$p_dirty_df
+d_clean = params$p_clean_df
+target_nt = params$p_target_nt
+```
+
+# Cleaning Process
+
+1. Remove upper and lower 1%
+2. Remove all participants that have lost over 50% of trials in the previous step
+3. Resample trials per participant until target_nt=`r target_nt` is achieved
+
+# Percentile cleaning
+
+```{r warning=FALSE}
+dirty_perc_plot = ggplot(d_dirty, aes(x=rt_raw)) +
+  geom_histogram(aes(y=..density..), bins=30, alpha=0, color='black') +
+  geom_density() +
+  labs(title = 'Dirty') +
+  theme_tufte(base_family = 'sans-serif', base_size=12)
+
+clean_perc_plot = ggplot(d_clean, aes(x=rt_raw)) +
+  geom_histogram(aes(y=..density..), bins=30, alpha=0, color='black') +
+  geom_density() +
+  labs(title = 'Clean') +
+  theme_tufte(base_family = 'sans-serif', base_size=12)
+
+plot_grid(dirty_perc_plot, clean_perc_plot)
+```
+
+# Number of participants lost
+
+```{r}
+dirty_np = length(unique(d_dirty[['id']]))
+clean_np = length(unique(d_clean[['id']]))
+                  
+data.frame(Dirty=dirty_np,
+           Clean=clean_np,
+           Lost= dirty_np - clean_np) %>%
+  kable %>%
+  kable_styling()
+```
+```{r}
+
+
+```
+
+# Trial addition
+```{r}
+
+dirty_nt = d_dirty %>% group_by(id) %>% summarise(nt = n()) 
+clean_nt = d_clean %>% group_by(id) %>% summarise(nt = n()) 
+
+dirty_nt %>% kable() %>% kable_styling()
+
+dirty_nt_plot = ggplot(dirty_nt, aes(x=nt)) +
+  geom_histogram(bins=30,alpha=0, color='black') +
+  labs(title = 'Dirty') +
+  theme_tufte(base_family = 'sans-serif', base_size=12)
+
+clean_nt_plot = ggplot(clean_nt, aes(x=nt)) +
+  geom_histogram(bins=30,alpha=0, color='black') +
+  labs(title = 'Clean') +
+  theme_tufte(base_family = 'sans-serif', base_size=12)
+
+plot_grid(dirty_nt_plot, clean_nt_plot)
+```
+

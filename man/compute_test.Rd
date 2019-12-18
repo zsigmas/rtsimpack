@@ -6,6 +6,9 @@
 \usage{
 compute_test(d)
 }
+\arguments{
+\item{d}{a dataframe in which we will compute the tests}
+}
 \description{
 This function computes the t-test values of all the variables in a dataframe grouped by the variables
 \emph{iter}
@@ -13,5 +16,8 @@ This function computes the t-test values of all the variables in a dataframe gro
 \details{
 It computes the t-test by calculating the difference between condition per participant and then computing a one-sample t-test.
 
-#' @param d a dataframe in which we will compute the tests
+It assumes that \emph{d} is condition ordered within the participant A first row and B second row. Albeit it doesn't matter due to random allocation of conditions
+it is important to be aware so it is not used to calculate real t-test or if used this should be taken into consideration.
+
+A better approach not implemented here would be to move condition to play with some separate gather, but it is not worth it here at the moment.
 }

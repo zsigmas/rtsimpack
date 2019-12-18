@@ -60,3 +60,26 @@ test_that('Getting number of trials',
             expect_error(get_ntc(diff_it_odd))
             expect_error(get_ntc(diff_no_it_odd))
           })
+
+test_that("Sampling provides different participants across iterations and invokations", {
+  # Bug provoked
+  set.seed(1)
+  ni = 2
+  np = 10
+  d = rtsimpack::dummy_original
+  ids = rtsimpack::get_ids(d)
+  s1 = rtsimpack::sample_data(d, ni, np, ids, replace_id = FALSE) %>%
+    dplyr::select(iter, id) %>% dplyr::distinct()
+  s2 = rtsimpack::sample_data(d, ni, np, ids, replace_id = FALSE) %>%
+    dplyr::select(iter, id) %>% dplyr::distinct()
+
+  it1 = s1 %>% dplyr::filter(iter==1) %>% dplyr::pull(id)
+  it2 = s1 %>% dplyr::filter(iter==2) %>% dplyr::pull(id)
+
+  id1 = s1 %>% dplyr::pull(id)
+  id2 = s2 %>% dplyr::pull(id)
+
+  expect_false(all(id1==id2))
+  expect_false(all(it1==it2))
+})
+

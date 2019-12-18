@@ -81,11 +81,28 @@ compute_pp = function(d){
 #'
 #' @export
 
-compute_agg = function(d){
+compute_agg = function(d){compute_agg_dt(d)}
+
+#' Compute aggregate measures using dplyr
+#' @export
+compute_agg_dp = function(d){
   na_mean = purrr::partial(mean, na.rm=TRUE)
   na_median = purrr::partial(median, na.rm=TRUE)
   d = d %>% dplyr::group_by(iter, id, condition) %>%
     dplyr::summarise_all(.funs=list('mean'=na_mean, 'median'=na_median))
+}
+
+#' Helper function to compute_agg_dt
+#' @export
+compute_mean_median = function(x) {list(mean = mean(x, na.rm=TRUE), median = median(x, na.rm=TRUE))}
+
+#' Compute aggregate measures using data.table
+#' Tidy can manage data.tables so no need to convert back
+#' @export
+compute_agg_dt = function(d){
+  d = data.table::as.data.table(d)
+  d = d[, as.list(unlist(lapply(.SD, compute_mean_median))), by = c('iter', 'id', 'condition')]
+  setorder(d, iter, id, condition)
 }
 
 #' Compute t-test
@@ -95,16 +112,39 @@ compute_agg = function(d){
 #'
 #' It computes the t-test by calculating the difference between condition per participant and then computing a one-sample t-test.
 #'
-#' #' @param d a dataframe in which we will compute the tests
+#' It assumes that \emph{d} is condition ordered within the participant A first row and B second row. Albeit it doesn't matter due to random allocation of conditions
+#' it is important to be aware so it is not used to calculate real t-test or if used this should be taken into consideration.
+#'
+#' A better approach not implemented here would be to move condition to play with some separate gather, but it is not worth it here at the moment.
+#'
+#' @param d a dataframe in which we will compute the tests
 #' @export
 
-compute_test  = function(d){
-  np = nrow(d)/length(unique(d[['iter']])) # Number of participants, maybe pass as parameter
+compute_test = function(d){compute_test_dt(d)}
+
+#' Compute aggregate measures using dplyr
+#' @export
+compute_test_dp  = function(d){
+  np = (nrow(d)/length(unique(d[['iter']])))/2 # Number of participants, maybe pass as parameter
   t_test_part = purrr::partial(t_test, np=np)
   x = d %>% dplyr::group_by(iter, id) %>%
     dplyr::summarise_if(is.numeric, .funs = list(~(.[1]-.[2]))) %>%
+    dplyr::select(-id) %>%
     dplyr::group_by(iter) %>%
     dplyr::summarise_all(t_test_part)
+}
+
+#' Compute aggregate measures using data.table
+#' Tidy can manage data.tables so no need to convert back
+#' @export
+compute_test_dt  = function(d){
+  d = rtsimpack::dummy_test
+  d = data.table::as.data.table(d) # Not needed as when using data.table we should use all the functions but just in case. It is very cheap
+  np = length(unique(d[['id']])) # Trusting that replace_id is TRUE in sample_data function
+  d = d[, condition:=NULL]
+  d = d[, as.list(unlist(lapply(.SD, function(x){x[1]-x[2]}))), by = c('iter', 'id')]
+  d = d[, id:=NULL]
+  d = d[, lapply(.SD, function(x){t_test(x, np)}), by = c('iter')]
 }
 
 #' t-test lite version
@@ -137,13 +177,14 @@ t_test = function(x, np){
 #' @param ni the number of iterations we will perform in one chunk
 #' @param np number of participants to sample
 #' @param ids a vector with the ids of each of participant
-#' @param replace_id flag that indicates if participants ids will be replaced (1:np) or not
+#' @param replace_id flag that indicates if participants ids will be replaced (1:np) or not. When running simulations it must always be set to TRUE!
+#'
 #'
 #' @export
 
 sample_data = function(d, ni, np, ids, replace_id=TRUE){
   s = data.frame(iter = rep(1:ni, times=1, each=np),
-                 id = sample(ids, np, replace = TRUE),
+                 id = sample(ids, np*ni, replace = TRUE),
                  nid = rep(1:np, times=ni))
   s = dplyr::inner_join(s, d, by='id')
   if(replace_id){
@@ -210,7 +251,7 @@ get_ntc = function(d){
   return(ntv[1]/2)
 }
 
-#' Get file sample and launch iterations
+#' Get file and launch iterations
 #'
 #' The main function to be called when invoking the simulation.
 #'

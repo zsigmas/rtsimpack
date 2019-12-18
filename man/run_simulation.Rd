@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{run_simulation}
 \alias{run_simulation}
-\title{Get file sample and launch iterations}
+\title{Get file and launch iterations}
 \usage{
 run_simulation(file, ni, np, nipi)
 }

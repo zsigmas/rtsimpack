@@ -15,7 +15,7 @@ sample_data(d, ni, np, ids, replace_id = TRUE)
 
 \item{ids}{a vector with the ids of each of participant}
 
-\item{replace_id}{flag that indicates if participants ids will be replaced (1:np) or not}
+\item{replace_id}{flag that indicates if participants ids will be replaced (1:np) or not. When running simulations it must always be set to TRUE!}
 }
 \description{
 This function generates \emph{ni} samples of \emph{np} participants in each sample.

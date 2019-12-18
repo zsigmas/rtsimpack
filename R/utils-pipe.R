@@ -9,3 +9,6 @@
 #' @importFrom magrittr %>%
 #' @usage lhs \%>\% rhs
 NULL
+
+# Make sure data.table knows we are calling him
+.datatable.aware = TRUE
