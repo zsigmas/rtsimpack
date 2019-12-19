@@ -102,7 +102,7 @@ compute_mean_median = function(x) {list(mean = mean(x, na.rm=TRUE), median = med
 compute_agg_dt = function(d){
   d = data.table::as.data.table(d)
   d = d[, as.list(unlist(lapply(.SD, compute_mean_median))), by = c('iter', 'id', 'condition')]
-  setorder(d, iter, id, condition)
+  data.table::setorder(d, iter, id, condition)
 }
 
 #' Compute t-test
@@ -138,7 +138,6 @@ compute_test_dp  = function(d){
 #' Tidy can manage data.tables so no need to convert back
 #' @export
 compute_test_dt  = function(d){
-  d = rtsimpack::dummy_test
   d = data.table::as.data.table(d) # Not needed as when using data.table we should use all the functions but just in case. It is very cheap
   np = length(unique(d[['id']])) # Trusting that replace_id is TRUE in sample_data function
   d = d[, condition:=NULL]
@@ -269,7 +268,13 @@ get_ntc = function(d){
 
 run_simulation = function(file, ni, np, nipi){
 
-  d = readr::read_csv(file = file, col_types = 'illi') %>%
+  if (is.character(file)){
+    d = readr::read_csv(file = file, col_types = 'illi')
+  }else{
+    d = file
+  }
+
+  d = d %>%
     dplyr::select(rt_raw, id) %>%
     dplyr::mutate(rt_log = log(rt_raw),
                   rt_inv = 1/rt_raw)

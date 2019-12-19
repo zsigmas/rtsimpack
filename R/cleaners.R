@@ -13,11 +13,10 @@ format_synth = function(in_file, out_file=NULL){
   d = dplyr::mutate(d, id = as.integer(id+1),
                     rt_raw = as.integer(rt_raw))
 
-  if(is.null(out_file)){
-    return(d)
-  }else{
+  if(!is.null(out_file)){
     readr::write_excel_csv(d, out_file)
   }
+  return(d)
 }
 
 
@@ -30,11 +29,10 @@ format_synth = function(in_file, out_file=NULL){
 format_flexicon = function(in_file, out_file=NULL){
   load(in_file)
   d = flp %>% dplyr::select( rt_raw = rt, id = participant)
-  if(is.null(out_file)){
-    return(d)
-  }else{
-    readr::write_csv(d, out_file)
+  if(!is.null(out_file)){
+    readr::write_excel_csv(d, out_file)
   }
+  return(d)
 }
 
 
@@ -48,11 +46,10 @@ format_stroop = function(in_file, out_file=NULL){
   d = readr::read_csv(in_file, col_names = c('rt_raw', 'id'),
                       col_types = '----------i-i--',
                       skip = 1) # Skip header line, we use our own names
-  if(is.null(out_file)){
-    return(d)
-  }else{
-    readr::write_csv(d, out_file)
+  if(!is.null(out_file)){
+    readr::write_excel_csv(d, out_file)
   }
+  return(d)
 }
 
 #' Clean real datasets

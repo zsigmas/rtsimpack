@@ -59,6 +59,10 @@ cl_fl_p = list(target_nt = 2000,
                     top_cut= .99,
                     bot_cut= .01)
 
+sim_p = list(ni = 1000,
+             np = 30,
+             nipi = 100)
+
 
 # Dependence breaker function
 
@@ -136,8 +140,30 @@ plan = drake_plan(
                                      file_out('inst/clean_data/cl_sy_550_20_50.csv')),
   cl_sy_550_50_50_drk = format_synth(file_in('inst/raw_data/synth_miller-m550-s50-t50-np10000-nt100-ep0-cp0.5-esm0-est0.csv'),
                                      file_out('inst/clean_data/cl_sy_550_50_50.csv')),
+
+  ## Running simulations
+  sim_st_drk = run_simulation(cl_st_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+  sim_fl_drk = run_simulation(cl_fl_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+
+  sim_cl_sy_300_20_300_drk = run_simulation(cl_sy_300_20_300_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+  sim_cl_sy_300_50_300_drk = run_simulation(cl_sy_300_50_300_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+
+  sim_cl_sy_350_20_250_drk = run_simulation(cl_sy_350_20_250_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+  sim_cl_sy_350_50_250_drk = run_simulation(cl_sy_350_50_250_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+
+  sim_cl_sy_400_20_200_drk = run_simulation(cl_sy_400_20_200_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+  sim_cl_sy_400_50_200_drk = run_simulation(cl_sy_400_50_200_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+
+  sim_cl_sy_450_20_150_drk = run_simulation(cl_sy_450_20_150_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+  sim_cl_sy_450_50_150_drk = run_simulation(cl_sy_450_50_150_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+
+  sim_cl_sy_500_20_100_drk = run_simulation(cl_sy_500_20_100_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+  sim_cl_sy_500_50_50_drk = run_simulation(cl_sy_500_50_100_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+
+  sim_cl_sy_550_20_100_drk = run_simulation(cl_sy_550_20_50_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
+  sim_cl_sy_550_50_100_drk = run_simulation(cl_sy_550_50_50_drk, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']]),
 )
 
 cfg = drake_config(plan)
 vis_drake_graph(cfg)
-make(plan)
+make(plan, jobs = 4)
