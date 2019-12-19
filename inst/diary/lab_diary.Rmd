@@ -57,6 +57,11 @@ Upload to bitbucket.
 
 # 18.12.2019
 
-Drake issues it cannot have variables inside file_* or knitr_in they must be literals.
+Drake issues it cannot have variables inside file_* or knitr_in they must be literals. SOLVED.
 
-rmarkdwon::render does not play nicely only with output_file. We must provide also output_dir.
+rmarkdwon::render does not play nicely only with output_file. We must provide also output_dir. SOLVED.
+
+Now everything seems to work fine. It would be nice to give it a try with some random data and plot some histograms of the p-values to prove that everything more or less look fine.
+
+Launch with more iterations.
+Launch on the cluster, find the way to do so.
