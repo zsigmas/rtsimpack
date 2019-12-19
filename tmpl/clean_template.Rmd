@@ -60,10 +60,6 @@ data.frame(Dirty=dirty_np,
   kable %>%
   kable_styling()
 ```
-```{r}
-
-
-```
 
 # Trial addition
 ```{r}
@@ -71,7 +67,7 @@ data.frame(Dirty=dirty_np,
 dirty_nt = d_dirty %>% group_by(id) %>% summarise(nt = n()) 
 clean_nt = d_clean %>% group_by(id) %>% summarise(nt = n()) 
 
-dirty_nt %>% kable() %>% kable_styling()
+# dirty_nt %>% kable() %>% kable_styling()
 
 dirty_nt_plot = ggplot(dirty_nt, aes(x=nt)) +
   geom_histogram(bins=30,alpha=0, color='black') +

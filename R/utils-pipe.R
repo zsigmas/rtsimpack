@@ -12,3 +12,7 @@ NULL
 
 # Make sure data.table knows we are calling him
 .datatable.aware = TRUE
+
+# Logging
+logging::basicConfig(level=10)
+

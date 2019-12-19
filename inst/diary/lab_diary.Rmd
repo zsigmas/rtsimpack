@@ -52,3 +52,11 @@ When we draw the distribution we don't take into account the removed trials.
 In any case although numbers don't disagree much, they don't match perfectly.
 
 Try using Stroop.Rdata from the old functions. See if it matches that way.
+
+Upload to bitbucket.
+
+# 18.12.2019
+
+Drake issues it cannot have variables inside file_* or knitr_in they must be literals.
+
+rmarkdwon::render does not play nicely only with output_file. We must provide also output_dir.

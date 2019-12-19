@@ -65,9 +65,14 @@ format_stroop = function(in_file, out_file=NULL){
 clean_real = function(dirty_d, target_nt, min_nt, trim_top, trim_bottom){
 
   # Remove percentiles
-  top_cut = quantile(dirty_d[['rt_raw']], trim_top)
-  bot_cut = quantile(dirty_d[['rt_raw']], trim_bottom)
+  top_cut = quantile(dirty_d[['rt_raw']], .99)
+  bot_cut = quantile(dirty_d[['rt_raw']], .01)
   clean_d = dplyr::filter(dirty_d, bot_cut<rt_raw & rt_raw<top_cut)
+  logging::logdebug(paste('trimming upper: ', paste0(trim_top*100, '%')),logger='clean_real')
+  logging::logdebug(paste('top_cut', top_cut),logger='clean_real')
+  logging::logdebug(paste('trimming lower: ', paste0(trim_bottom*100, '%')),logger='clean_real')
+  logging::logdebug(paste('bot_cut', bot_cut),logger='clean_real')
+  logging::logdebug(paste('rows after trimming', nrow(clean_d)),logger='clean_real')
 
   # Remove participant that have lost too many trials
   accepted_ids = clean_d %>% dplyr::group_by(id) %>%
@@ -75,6 +80,8 @@ clean_real = function(dirty_d, target_nt, min_nt, trim_top, trim_bottom){
     dplyr::filter(nt>=min_nt) %>%
     dplyr::pull(id)
   clean_d = clean_d %>% dplyr::filter(id %in% accepted_ids)
+  logging::logdebug(paste('Initial ids', length(unique(dirty_d[['id']]))),logger='clean_real')
+  logging::logdebug(paste('Remaining ids', length(accepted_ids)),logger='clean_real')
 
   # Add the trials until target_nt is met
   low_nt_ids = clean_d %>% dplyr::group_by(id) %>%
