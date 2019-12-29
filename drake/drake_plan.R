@@ -1,5 +1,6 @@
 library(drake)
 library(rtsimpack)
+library(purrr)
 
 expose_imports(rtsimpack)
 
@@ -60,10 +61,10 @@ cl_fl_p = list(target_nt = 2000,
                     top_cut= .99,
                     bot_cut= .01)
 
-sim_p = list(ni = 1000000,
+sim_p = list(ni = 10000,
              np = 30,
              nipi = 10,
-             cl = NULL)
+             chunks = 100) # The total number of iterations per dataset is ni*chunks
 
 
 # Render function
@@ -75,6 +76,21 @@ my_render = function(input, output_file, ...){
                     output_dir = dirname(output_file),
                     ...)
 }
+
+my_ggsave  = function(filename, ...){
+  ggplot2::ggsave(filename = basename(filename),
+                  path = dirname(filename),
+                  ...)
+}
+
+# Dummy run_simulation so we can divide the work in smaller pieces and parallelize
+
+run_simulation_dummy = function(chunk_num, dataset, ...){
+  #Chunk num is discarded is only used as a helper for the cross function below
+  run_simulation(file = dataset[[1]], d_name = dataset[[2]], ...)
+}
+
+run_simulation_drk = purrr::partial(run_simulation_dummy, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']])
 
 plan = drake_plan(
 
@@ -144,77 +160,30 @@ plan = drake_plan(
                                      file_out('inst/clean_data/cl_sy_550_50_50.csv')),
 
   ################################################### Running simulations ##############################################
-  sim_st_drk = run_simulation(cl_st_drk,
-                              ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                              d_name='stroop',
-                              cl = sim_p[['cl']]),
-  sim_fl_drk = run_simulation(cl_fl_drk,
-                              ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                              d_name='flexicon',
-                              cl = sim_p[['cl']]),
 
-  sim_cl_sy_300_20_300_drk = run_simulation(cl_sy_300_20_300_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_300_20_300',
-                                            cl = sim_p[['cl']]),
-  sim_cl_sy_300_50_300_drk = run_simulation(cl_sy_300_50_300_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_300_50_300',
-                                            cl = sim_p[['cl']]),
 
-  sim_cl_sy_350_20_250_drk = run_simulation(cl_sy_350_20_250_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_350_20_250',
-                                            cl = sim_p[['cl']]),
-  sim_cl_sy_350_50_250_drk = run_simulation(cl_sy_350_50_250_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_350_50_250',
-                                            cl = sim_p[['cl']]),
+  sim_drk = target(
+    run_simulation_drk(chunk=g_chunk, dataset=g_dataset),
+    transform = cross(g_dataset = list(list(cl_st_drk, 'stroop'),
+                                       list(cl_fl_drk, 'flexicon'),
+                                       list(cl_sy_300_20_300_drk, 's_300_20_300'),
+                                       list(cl_sy_350_20_250_drk, 's_350_20_250'),
+                                       list(cl_sy_400_20_200_drk, 's_00_20_200'),
+                                       list(cl_sy_450_20_150_drk, 's_450_20_150'),
+                                       list(cl_sy_500_20_100_drk, 's_500_20_100'),
+                                       list(cl_sy_550_20_50_drk, 's_550_20_50'),
+                                       list(cl_sy_300_50_300_drk, 's_300_50_300'),
+                                       list(cl_sy_350_50_250_drk, 's_350_50_250'),
+                                       list(cl_sy_400_50_200_drk, 's_400_50_200'),
+                                       list(cl_sy_450_50_150_drk, 's_450_50_150'),
+                                       list(cl_sy_500_50_100_drk, 's_500_50_100'),
+                                       list(cl_sy_550_50_50_drk, 's_550_50_50')
+                                       ),
+                      chunk = !!(1:sim_p[['chunks']]))
+  ),
 
-  sim_cl_sy_400_20_200_drk = run_simulation(cl_sy_400_20_200_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_400_20_200',
-                                            cl = sim_p[['cl']]),
-  sim_cl_sy_400_50_200_drk = run_simulation(cl_sy_400_50_200_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_400_50_200',
-                                            cl = sim_p[['cl']]),
-
-  sim_cl_sy_450_20_150_drk = run_simulation(cl_sy_450_20_150_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_450_20_150',
-                                            cl = sim_p[['cl']]),
-  sim_cl_sy_450_50_150_drk = run_simulation(cl_sy_450_50_150_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_450_50_150',
-                                            cl = sim_p[['cl']]),
-
-  sim_cl_sy_500_20_100_drk = run_simulation(cl_sy_500_20_100_drk,
-                                            ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                            d_name = 's_500_20_100',
-                                            cl = sim_p[['cl']]),
-  sim_cl_sy_500_50_100_drk = run_simulation(cl_sy_500_50_100_drk,
-                                           ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                           d_name = 's_500_50_50',
-                                           cl = sim_p[['cl']]),
-
-  sim_cl_sy_550_20_50_drk = run_simulation(cl_sy_550_20_50_drk,
-                                           ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                           d_name = 's_550_20_100',
-                                           cl = sim_p[['cl']]),
-  sim_cl_sy_550_50_50_drk = run_simulation(cl_sy_550_50_50_drk,
-                                           ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']],
-                                           d_name = 's_550_50_100',
-                                           cl = sim_p[['cl']]),
-  # Join data
-  jnd_res_drk = dplyr::bind_rows(sim_st_drk, sim_fl_drk,
-                                        sim_cl_sy_300_20_300_drk, sim_cl_sy_300_50_300_drk,
-                                        sim_cl_sy_350_20_250_drk, sim_cl_sy_350_50_250_drk,
-                                        sim_cl_sy_400_20_200_drk, sim_cl_sy_400_50_200_drk,
-                                        sim_cl_sy_450_20_150_drk, sim_cl_sy_450_50_150_drk,
-                                        sim_cl_sy_500_20_100_drk, sim_cl_sy_500_50_100_drk,
-                                        sim_cl_sy_550_20_50_drk, sim_cl_sy_550_50_50_drk
-                                        ),
+  jnd_res_drk = target(dplyr::bind_rows(sim_drk),
+                       transform = combine(sim_drk)),
 
   jnd_res_f_drk = readr::write_csv(jnd_res_drk , file_out('inst/results/sim_res_iter.csv')),
 
@@ -230,17 +199,24 @@ plan = drake_plan(
 
   ## Final report table and plot
 
-  bar_plot_drk = gen_figures(fp_single_drk, fp_group_drk),
+  bar_plot_drk = gen_bar_plot(fp_single_drk, fp_group_drk),
 
   fp_rep_drk = my_render(knitr_in(input = 'tmpl/analysis_template.Rmd'),
                          output_file = file_out('reports/fp.html'),
                          params = list(fp_df = fp_single_drk),
-                         quiet = TRUE)
+                         quiet = TRUE),
 
-
+  bar_plot_f_drk = my_ggsave(file_out('./inst/figures/bar_plot.tiff'),
+                             plot=bar_plot_drk,
+                             device='tiff',
+                             width=90,
+                             units='mm',
+                             dpi=1000,
+                             scale=2,
+                             compression = "lzw")
 )
 
 future::plan(future::multiprocess)
 cfg = drake_config(plan)
-vis_drake_graph(cfg)
+# vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
 make(plan, parallelism = 'future', jobs = 4)

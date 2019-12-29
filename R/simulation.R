@@ -267,11 +267,10 @@ get_ntc = function(d){
 #' @param np number of participants to be included in each of the simulation iterations
 #' @param nipi number of iterations per iteration
 #' @param d_name Name of the dataset being processed so they can be bound in a later stage
-#' @param cl number of cpus to be used when running the simulation (A cluster object can be used)
 #'
 #' @export
 
-run_simulation = function(file, ni, np, nipi, d_name = NA, cl=NULL){
+        run_simulation = function(file, ni, np, nipi, d_name = NA){
 
   if (is.character(file)){
     d = readr::read_csv(file = file, col_types = 'illi')

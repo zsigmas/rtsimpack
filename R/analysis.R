@@ -30,7 +30,8 @@ bar_graph = function(d){
 #'
 
 tide_rename = function(d){
-  d2 = d %>%
+
+  d = d %>% mutate(iter=1:nrow(d)) %>% # Iter number is forced, because of chunk system used in drake only assumption here is that each row is an iteration
     tidyr::pivot_longer(cols = tidyr::starts_with('rt_'), names_to = 'pp', values_to = 'fp') %>%
     dplyr::mutate(pp = stringr::str_remove(pp, pattern = 'rt_'),
                   pp = stringr::str_remove(pp, pattern = '_fp'),
@@ -42,7 +43,7 @@ tide_rename = function(d){
 
     ) %>%
     tidyr::pivot_wider(names_from = 'pp', values_from = 'fp') %>%
-    dplyr::select(-one_of(c('iter', 'ni')))
+    dplyr::select(-one_of(c('iter')))
 }
 
 #' Group results by pipelines
@@ -93,7 +94,7 @@ tide_rename = function(d){
 
 #' Figures for the paper
 
-gen_figures = function(fp_single, fp_group){
+gen_bar_plot = function(fp_single, fp_group){
   ds = fp_single %>%
     dplyr::select(-ni) %>%
     tidyr::pivot_longer(-dataset, names_to = 'pp', values_to='fp') %>%
@@ -114,36 +115,37 @@ gen_figures = function(fp_single, fp_group){
     dplyr::summarise(Proportion = mean(Proportion)) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(Dataset = forcats::fct_relevel(Dataset, levels=c('Flexicon', 'Stroop', 'Simulated')),
-                  Se = forcats::fct_relevel(Set, levels=c('Single PP',
-                                                     'Raw - NO SD - Mean/Median',
-                                                     'Raw/Log/Inv - NO SD - Mean',
-                                                     'Raw/Log/Inv - NO SD - Median',
-                                                     'Raw/Log/Inv - NO SD - Mean/Median',
-                                                     'Raw - NO/2.0/2.5/3.0 SD - Mean',
-                                                     'All')))
+                  Set = forcats::fct_rev(forcats::fct_relevel(Set, levels=c(
+                    'Single PP',
+                    'Raw - NO SD - Mean/Median',
+                    'Raw/Log/Inv - NO SD - Mean',
+                    'Raw/Log/Inv - NO SD - Median',
+                    'Raw/Log/Inv - NO SD - Mean/Median',
+                    'Raw - NO/2.0/2.5/3.0 SD - Mean',
+                    'All'))))
 
 
-  ggplot(d, aes(x=Set, y=Proportion, fill=Dataset))+
-    geom_bar(stat="identity", position=position_dodge(),width = 0.4)  +
-    geom_hline(yintercept=.05, color='grey50', linetype=2, size=.5)+
-    geom_hline(yintercept=.1, color='grey50', linetype=2, size=.5)+
-    geom_hline(yintercept=.15, color='grey50', linetype=2, size=.5)+
-    labs(x='Preprocessing Pipeline', y="Proportion of false positives", fill=NULL)+theme_tufte()+
-    theme(text=element_text(family = "Gill Sans MT"),
-          axis.text.y = element_text(size=10),
-          axis.text.x = element_text(size=10, face=c('plain','bold','plain','plain')),
+  ggplot2::ggplot(d, ggplot2::aes(x=Set, y=Proportion, fill=Dataset))+
+    ggplot2::geom_bar(stat="identity", position=ggplot2::position_dodge(),width = 0.4)  +
+    ggplot2::geom_hline(yintercept=.05, color='grey50', linetype=2, size=.5)+
+    ggplot2::geom_hline(yintercept=.1, color='grey50', linetype=2, size=.5)+
+    ggplot2::geom_hline(yintercept=.15, color='grey50', linetype=2, size=.5)+
+    ggplot2::labs(x='Preprocessing Pipeline', y="Proportion of false positives", fill=NULL)+ggthemes::theme_tufte()+
+    ggplot2::theme(text=ggplot2::element_text(family = "Gill Sans MT"),
+          axis.text.y = ggplot2::element_text(size=10),
+          axis.text.x = ggplot2::element_text(size=10, face=c('plain','bold','plain','plain')),
           legend.position=c(.3, -.22),
-          legend.background = element_rect(fill=NA, color=NA),
-          legend.text = element_text(size=10),
+          legend.background = ggplot2::element_rect(fill=NA, color=NA),
+          legend.text = ggplot2::element_text(size=10),
           legend.direction = 'horizontal',
-          legend.key = element_rect(fill=NA, color=NA),
-          panel.grid.major.y = element_blank(),
+          legend.key = ggplot2::element_rect(fill=NA, color=NA),
+          panel.grid.major.y = ggplot2::element_blank(),
           aspect.ratio = 2/3,
           plot.margin=grid::unit(c(0,0,0,0), "mm")
     )+
-    coord_flip()+
-    scale_fill_grey()
+    ggplot2::coord_flip()+
+    ggplot2::scale_fill_grey()
 
 
-}
+  }
 
