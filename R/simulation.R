@@ -60,16 +60,19 @@ compute_pp = function(d){
                   filter_3.0 = ifelse(rt_raw <= 3.0 * filter_stdev + filter_avg &
                                         rt_raw >= -3.0 * filter_stdev + filter_avg,
                                       1, NA),
+                  rt_raw0.0 = rt_raw,
                   rt_raw2.0 = rt_raw*filter_2.0,
                   rt_raw2.5 = rt_raw*filter_2.5,
                   rt_raw3.0 = rt_raw*filter_3.0,
+                  rt_log0.0 = rt_log,
                   rt_log2.0 = rt_log*filter_2.0,
                   rt_log2.5 = rt_log*filter_2.5,
                   rt_log3.0 = rt_log*filter_3.0,
+                  rt_inv0.0 = rt_inv,
                   rt_inv2.0 = rt_inv*filter_2.0,
                   rt_inv2.5 = rt_inv*filter_2.5,
                   rt_inv3.0 = rt_inv*filter_3.0) %>%
-    dplyr::select(-dplyr::starts_with('filter_'))
+    dplyr::select(-dplyr::starts_with('filter_'), -rt_raw, -rt_log, -rt_inv)
 }
 
 #' Compute aggregate measures
@@ -263,10 +266,12 @@ get_ntc = function(d){
 #' @param ni number of iterations that will be performed
 #' @param np number of participants to be included in each of the simulation iterations
 #' @param nipi number of iterations per iteration
+#' @param d_name Name of the dataset being processed so they can be bound in a later stage
+#' @param cl number of cpus to be used when running the simulation (A cluster object can be used)
 #'
 #' @export
 
-run_simulation = function(file, ni, np, nipi){
+run_simulation = function(file, ni, np, nipi, d_name = NA, cl=NULL){
 
   if (is.character(file)){
     d = readr::read_csv(file = file, col_types = 'illi')
@@ -287,6 +292,7 @@ run_simulation = function(file, ni, np, nipi){
                           oi = compute_one_iteration(d, ni, np, ntc, ids)
                           return(oi)
                         },d=d, ni=nipi, np=np, ntc=ntc, ids=ids)
-  r = dplyr::bind_rows(r)
+  r = dplyr::bind_rows(r) %>% dplyr::mutate(dataset = d_name)
+
   return(r)
 }

@@ -1,0 +1,74 @@
+---
+output:
+  html_document:
+    df_print: paged
+params:
+  fp_df: !r NULL
+  p_df: !r NULL
+title: "Analysis Template"
+
+---
+
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+library(cowplot)
+library(kableExtra)
+library(ggthemes)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+
+drake::loadd(fp_single_drk)
+drake::loadd(jnd_res_drk)
+drake::loadd(fp_group_drk)
+
+fp_df = params$fp_df
+fp_df = fp_single_drk
+p_df = jnd_res_drk
+fp_group = fp_group_drk
+```
+
+# Checking the results
+
+### P-value distributions across iterations by dataset
+Check distribution is uniform. Dips in the limits are normal.
+
+```{r}
+long_p_df = p_df %>% pivot_longer(cols=starts_with('rt_'), names_to = "pp", values_to = "p")
+
+ggplot(long_p_df, aes(x=p, color=dataset)) +
+  geom_density() +
+  theme_tufte(base_family = 'sans') +
+  labs(title='p-value distribution across PPs and iterations by dataset',
+       x = 'p-value')
+
+```
+
+
+### False positive when considering a single preprocessing pipeline
+All values should be tightly concentrated along the .05 line. Otherwise the expected false positive rate defined by the alpha-level is not achieved.
+```{r}
+long_fp_df = fp_df %>% pivot_longer(cols=matches('^[a-z]{3}_'), names_to = "pp", values_to = "fp")
+
+ggplot(long_fp_df, aes(x=fp)) +
+  geom_density() +
+  theme_tufte(base_family = 'sans') +
+  geom_vline(xintercept = .05, linetype=2)+
+  labs(title='FP in single pipelines',
+       x = "False Positive rate (alpha = .05)")
+```
+
+# Figures for the paper
+
+## Table
+
+```{r}
+fp_group %>% kable() %>% kable_styling()
+```
+
+
+## Figure
+```{r}
+
+```
+

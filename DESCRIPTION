@@ -25,7 +25,9 @@ Imports:
     ggplot2,
     kableExtra,
     ggthemes,
-    logging
+    logging,
+    tidyr,
+    forcats
 Suggests: 
     testthat (>= 2.1.0)
 RoxygenNote: 6.1.1
