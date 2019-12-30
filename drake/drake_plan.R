@@ -61,10 +61,10 @@ cl_fl_p = list(target_nt = 2000,
                     top_cut= .99,
                     bot_cut= .01)
 
-sim_p = list(ni = 10000,
+sim_p = list(ni = 100,
              np = 30,
              nipi = 10,
-             chunks = 100) # The total number of iterations per dataset is ni*chunks
+             chunks = 1000) # The total number of iterations per dataset is ni*chunks
 
 
 # Render function
@@ -218,5 +218,5 @@ plan = drake_plan(
 
 future::plan(future::multiprocess)
 cfg = drake_config(plan)
-# vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
+  vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
 make(plan, parallelism = 'future', jobs = 4)

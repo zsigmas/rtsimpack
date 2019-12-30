@@ -31,7 +31,7 @@ bar_graph = function(d){
 
 tide_rename = function(d){
 
-  d = d %>% mutate(iter=1:nrow(d)) %>% # Iter number is forced, because of chunk system used in drake only assumption here is that each row is an iteration
+  d = d %>% dplyr::mutate(iter=1:nrow(d)) %>% # Iter number is forced, because of chunk system used in drake only assumption here is that each row is an iteration
     tidyr::pivot_longer(cols = tidyr::starts_with('rt_'), names_to = 'pp', values_to = 'fp') %>%
     dplyr::mutate(pp = stringr::str_remove(pp, pattern = 'rt_'),
                   pp = stringr::str_remove(pp, pattern = '_fp'),
@@ -43,7 +43,7 @@ tide_rename = function(d){
 
     ) %>%
     tidyr::pivot_wider(names_from = 'pp', values_from = 'fp') %>%
-    dplyr::select(-one_of(c('iter')))
+    dplyr::select(-iter)
 }
 
 #' Group results by pipelines
