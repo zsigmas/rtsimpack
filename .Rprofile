@@ -1,3 +1,3 @@
 source("renv/activate.R")
-library(devtools)
+suppressMessages(suppressWarnings(library(devtools)))
 load_all()

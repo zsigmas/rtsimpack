@@ -25,7 +25,7 @@ gen_dummy = function(ni=4, np=3, nipi=2){
 
 #' Generate a dataset to be used as parameter in sample_data
 gen_dummy_sample = function(ni=4, np=3, nipi=2){
-  file = "/home/zsigmas/Dropbox/CienciaSobreCiencia/rtsimpack/inst/test_data/test_comma.csv"
+  file = "/home/zsigmas/CienciaSobreCiencia/rtsimpack/inst/test_data/test_comma.csv"
 
   dummy_sample = readr::read_csv(file = file, col_types = 'illi') %>%
     dplyr::select(rt_raw, id) %>%

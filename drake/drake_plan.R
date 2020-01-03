@@ -3,16 +3,16 @@
 #SBATCH -p high
 #SBATCH --time=48:00:00
 #SBATCH -N 1-1
+#SBATCH --mem-per-cpu=8G
 #SBATCH -c 12
 #SBATCH --workdir=/homedtic/lmoris/rtsimpack
 #SBATCH -o /homedtic/lmoris/log/slurm.%N.%J.%u.%a.out # STDOUT
 #SBATCH -e /homedtic/lmoris/log/slurm.%N.%J.%u.%a.err # STDERR
 
-library(drake)
-#library(rtsimpack)
-library(purrr)
-library(pbapply)
-library(logging)
+suppressMessages(suppressWarnings(library(drake)))
+suppressMessages(suppressWarnings(library(purrr)))
+suppressMessages(suppressWarnings(library(pbapply)))
+suppressMessages(suppressWarnings(library(logging)))
 pboptions(type='none')
 
 # Abbreviations
@@ -28,18 +28,35 @@ pboptions(type='none')
 # sim_: simulation results
 # fp: false_positives
 
+loglevel = 10
+basicConfig(level=loglevel)
+
 loginfo('Setting up the directory and environment', logger = 'drake_plan')
 
 # Paths
 ## Directories
 base_dir = '/home/zsigmas/CienciaSobreCiencia/rtsimpack' # This should match the directory where you have extracted the package
+
+is_cluster = !(Sys.info()[['login']]=='zsigmas' & Sys.info()[['nodename']]=='zsigmas-pc')
+loginfo(paste0('is_cluster=', is_cluster), logger = 'drake_plan.R')
+
+if(is_cluster){
+  base_dir = '/homedtic/lmoris/rtsimpack'
+  Sys.setenv(PATH=paste0(Sys.getenv('PATH'),':','/homedtic/lmoris/miniconda3/envs/rtsimenv/bin'))
+  n_jobs=12
+}else{
+  base_dir = '/home/zsigmas/CienciaSobreCiencia/rtsimpack'
+  n_jobs = 4
+}
+
+loginfo(paste0('base_dir=', base_dir), logger = 'drake_plan.R')
+loginfo(paste0('n_jobs=', n_jobs), logger = 'drake_plan.R')
+
 setwd(base_dir) # Make sure we are running the project in the correct place
 
 devtools::load_all()
 
 expose_imports(rtsimpack)
-
-
 
 # Plan parameters
 
@@ -47,7 +64,7 @@ expose_imports(rtsimpack)
 cl_st_p = list(target_nt = 64,
                min_nt = 32,
                top_cut= .99,
-               bot_cut= -01)
+               bot_cut= .01)
 
 cl_fl_p = list(target_nt = 2000,
                min_nt = 1000,
@@ -99,7 +116,7 @@ plan = drake_plan(
                          cl_st_p$target_nt,
                          cl_st_p$min_nt,
                          cl_st_p$top_cut,
-                         cl_st_p$bottom_cut),
+                         cl_st_p$bot_cut),
   cl_st_rep_drk = my_render(input = knitr_in('tmpl/clean_template.Rmd'),
                             output_file = file_out('reports/cl_st.html'),
                             params = list(p_dataset_name='Stroop',
@@ -111,11 +128,11 @@ plan = drake_plan(
 
   # Clean Flexicon
   format_fl_drk = format_flexicon(file_in('inst/raw_data/french_lexicon_project_rt_data.RData')),
-  cl_fl_drk = clean_real(format_fl_drk,
-                         cl_fl_p$target_nt,
-                         cl_fl_p$min_nt,
-                         cl_fl_p$top_cut,
-                         cl_fl_p$bottom_cut),
+    cl_fl_drk = clean_real(format_fl_drk,
+                           cl_fl_p$target_nt,
+                           cl_fl_p$min_nt,
+                           cl_fl_p$top_cut,
+                           cl_fl_p$bot_cut),
   cl_fl_rep_drk = my_render(knitr_in(input = 'tmpl/clean_template.Rmd'),
                             output_file = file_out('reports/cl_fl.html'),
                             params = list(p_dataset_name='Flexicon',
@@ -213,19 +230,23 @@ plan = drake_plan(
                              compression = "lzw")
 )
 
-# loginfo('Setting up the future plan', logger = 'drake_plan')
-#future::plan(future::multiprocess)
+loginfo('Setting up the future plan', logger = 'drake_plan')
+future::plan(future::multiprocess)
 
 loginfo('Building config', logger = 'drake_plan')
 cfg = drake_config(plan)
-#predict_runtime(cfg, jobs=12, warn=FALSE)
-outdated(cfg)
+
+loginfo('Outdated targets', logger = 'drake_plan')
+print.data.frame(outdated(cfg))
 
 #loginfo('Building dependency graph', logger = 'drake_plan')
 #vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
 
-# #loginfo('Building targets', logger = 'drake_plan')
-# make(plan, parallelism = 'loop',
-#      jobs = 1, prework = "devtools::load_all()",
-#      memory_strategy = "autoclean",
-#      garbage_collection = TRUE)
+loginfo('Building targets', logger = 'drake_plan')
+make(plan, parallelism = 'future',
+     jobs = n_jobs,
+     prework = c("devtools::load_all()",
+                 paste0("logging::basicConfig(level=", loglevel,")")),
+     memory_strategy = "autoclean",
+     garbage_collection = TRUE,
+     keep_going = TRUE)
