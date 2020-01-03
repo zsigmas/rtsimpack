@@ -197,18 +197,21 @@ plan = drake_plan(
   ),
 
   jnd_res_drk = target(dplyr::bind_rows(sim_drk),
-                       transform = combine(sim_drk)),
-
-  jnd_res_f_drk = readr::write_csv(jnd_res_drk , file_out('inst/results/sim_res_iter.csv')),
+                       transform = combine(sim_drk),
+                       format = 'fst'), # This is a huge target
 
   ################################################### Analysing data by datasets ##############################################
 
   ## Calculating fp_rates by single Preprocessing Pipeline
-  fp_single_drk = summarise_fp_single(tide_rename(jnd_res_drk), alpha=.05),
+
+  tide_res_drk = target(tide_rename(jnd_res_drk),
+                        format = 'fst'), # This is a huge target
+
+  fp_single_drk = summarise_fp_single(tide_res_drk, alpha=.05),
   fp_single_f_drk = readr::write_csv(fp_single_drk, file_out('inst/results/single_fp.csv')),
 
   ## Calculating fp_rates by grouped Preprocessing Pipelines
-  fp_group_drk = summarise_fp_group(tide_rename(jnd_res_drk)),
+  fp_group_drk = summarise_fp_group(tide_res_drk),
   fp_group_f_drk = readr::write_csv(fp_group_drk, file_out('inst/results/group_fp.csv')),
 
   ## Final report table and plot
@@ -237,16 +240,16 @@ loginfo('Building config', logger = 'drake_plan')
 cfg = drake_config(plan)
 
 loginfo('Outdated targets', logger = 'drake_plan')
-print.data.frame(outdated(cfg))
+    print.data.frame(outdated(cfg))
 
-#loginfo('Building dependency graph', logger = 'drake_plan')
-#vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
+loginfo('Building dependency graph', logger = 'drake_plan')
+vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
 
-loginfo('Building targets', logger = 'drake_plan')
-make(plan, parallelism = 'future',
-     jobs = n_jobs,
-     prework = c("devtools::load_all()",
-                 paste0("logging::basicConfig(level=", loglevel,")")),
-     memory_strategy = "autoclean",
-     garbage_collection = TRUE,
-     keep_going = TRUE)
+# loginfo('Building targets', logger = 'drake_plan')
+# make(plan, parallelism = 'future',
+#      jobs = n_jobs,
+#      prework = c("devtools::load_all()",
+#                  paste0("logging::basicConfig(level=", loglevel,")")),
+#      memory_strategy = "autoclean",
+#      garbage_collection = TRUE,
+#      keep_going = TRUE)
