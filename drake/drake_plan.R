@@ -1,8 +1,19 @@
-library(drake)
-library(rtsimpack)
-library(purrr)
+#!/homedtic/lmoris/miniconda3/envs/rtsimenv/bin/Rscript
+#SBATCH -J rtsimpack
+#SBATCH -p high
+#SBATCH --time=48:00:00
+#SBATCH -N 1-1
+#SBATCH -c 12
+#SBATCH --workdir=/homedtic/lmoris/rtsimpack
+#SBATCH -o /homedtic/lmoris/log/slurm.%N.%J.%u.%a.out # STDOUT
+#SBATCH -e /homedtic/lmoris/log/slurm.%N.%J.%u.%a.err # STDERR
 
-expose_imports(rtsimpack)
+library(drake)
+#library(rtsimpack)
+library(purrr)
+library(pbapply)
+library(logging)
+pboptions(type='none')
 
 # Abbreviations
 # st: stroop
@@ -17,57 +28,40 @@ expose_imports(rtsimpack)
 # sim_: simulation results
 # fp: false_positives
 
-# Paths
+loginfo('Setting up the directory and environment', logger = 'drake_plan')
 
+# Paths
 ## Directories
-base_dir = '/home/zsigmas/CienciaSobreCiencia/rtsimpack'
+base_dir = '/home/zsigmas/CienciaSobreCiencia/rtsimpack' # This should match the directory where you have extracted the package
 setwd(base_dir) # Make sure we are running the project in the correct place
 
-# Drake does not support variables inside file_in(), file_out, or knit_in
-# This is no longer used but keep it as reference for adding files
-# r_dir = file.path(base_dir, 'inst/raw_data')
-# cl_dir = file.path(base_dir, 'inst/clean_data/')
-# tmpl_dir = file.path(base_dir, 'tmpl')
-# rep_dir = file.path(base_dir, 'reports')
+devtools::load_all()
 
-# ## Templates
-# cl_tmpl_f = 'tmpl/clean_template.Rmd'
-#
-# ## Files
-# ### Raw
-# r_st_f = 'inst/raw_data/StroopCleanSet.csv'
-# r_fl_f = 'inst/raw_datafrench_lexicon_project_rt_data.RData'
-#
-# ### Clean files
-# cl_st_f = 'inst/clean_data/cl_st.csv'
-# cl_fl_f = 'inst/clean_data/cl_fl.csv'
-#
-# ## Report files
-# ### Cleaning
-# cl_st_rep = 'reports/cl_st.html'
-# cl_fl_rep = 'reports/cl_fl.html'
+expose_imports(rtsimpack)
+
 
 
 # Plan parameters
 
 ## Cleaning
 cl_st_p = list(target_nt = 64,
-                    min_nt = 32,
-                    top_cut= .99,
-                    bot_cut= -01)
+               min_nt = 32,
+               top_cut= .99,
+               bot_cut= -01)
 
 cl_fl_p = list(target_nt = 2000,
-                    min_nt = 1000,
-                    top_cut= .99,
-                    bot_cut= .01)
+               min_nt = 1000,
+               top_cut= .99,
+               bot_cut= .01)
 
-sim_p = list(ni = 100,
+sim_p = list(ni = 1000,
              np = 30,
              nipi = 10,
              chunks = 1000) # The total number of iterations per dataset is ni*chunks
 
+# Auxiliary functions
 
-# Render function
+## Render function
 
 my_render = function(input, output_file, ...){
   # We need this function because render do funny things with the directories, we cannot specify it in input only
@@ -77,6 +71,7 @@ my_render = function(input, output_file, ...){
                     ...)
 }
 
+## Ggsave function
 my_ggsave  = function(filename, ...){
   ggplot2::ggsave(filename = basename(filename),
                   path = dirname(filename),
@@ -91,6 +86,8 @@ run_simulation_dummy = function(chunk_num, dataset, ...){
 }
 
 run_simulation_drk = purrr::partial(run_simulation_dummy, ni=sim_p[['ni']], np=sim_p[['np']], nipi=sim_p[['nipi']])
+
+loginfo('Declaring plan', logger = 'drake_plan')
 
 plan = drake_plan(
 
@@ -178,8 +175,8 @@ plan = drake_plan(
                                        list(cl_sy_450_50_150_drk, 's_450_50_150'),
                                        list(cl_sy_500_50_100_drk, 's_500_50_100'),
                                        list(cl_sy_550_50_50_drk, 's_550_50_50')
-                                       ),
-                      chunk = !!(1:sim_p[['chunks']]))
+    ),
+    chunk = !!(1:sim_p[['chunks']]))
   ),
 
   jnd_res_drk = target(dplyr::bind_rows(sim_drk),
@@ -216,7 +213,19 @@ plan = drake_plan(
                              compression = "lzw")
 )
 
-future::plan(future::multiprocess)
+# loginfo('Setting up the future plan', logger = 'drake_plan')
+#future::plan(future::multiprocess)
+
+loginfo('Building config', logger = 'drake_plan')
 cfg = drake_config(plan)
-  vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
-make(plan, parallelism = 'future', jobs = 4)
+#predict_runtime(cfg, jobs=12, warn=FALSE)
+outdated(cfg)
+
+#loginfo('Building dependency graph', logger = 'drake_plan')
+#vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
+
+# #loginfo('Building targets', logger = 'drake_plan')
+# make(plan, parallelism = 'loop',
+#      jobs = 1, prework = "devtools::load_all()",
+#      memory_strategy = "autoclean",
+#      garbage_collection = TRUE)

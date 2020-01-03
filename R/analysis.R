@@ -1,7 +1,10 @@
-#' Summarise results
+#' This function creates a summary of the false positive rate in each of the single preprocessing pipelines
 #'
+#' Basically it needs a dataframe with p values and calculates the proportion of p values below the specified
+#' alpha level for each column
 #'
-#'
+#' @param d a dataframe containing p values
+#' @param alpha the specified alpha level
 #'
 
 summarise_fp_single = function(d, alpha=.05){
@@ -16,18 +19,13 @@ summarise_fp_single = function(d, alpha=.05){
 }
 
 
-#' Bar graph with final results
+
+#' Tidy and rename the dataset computed during the simulations
 #'
-
-bar_graph = function(d){
-
-
-
-}
-
-#' Tidy and rename the dataset
+#' The dataset returned by the simulation functions is very ugly for printing and showing in a report
+#' This functions tidy it and rename it in a prettier way as well and in wide format.
 #'
-#'
+#' @param
 
 tide_rename = function(d){
 
@@ -46,7 +44,16 @@ tide_rename = function(d){
     dplyr::select(-iter)
 }
 
-#' Group results by pipelines
+#' This function creates a summary of the false positive rate in each of the groups of used in the paper preprocessing pipelines
+#'
+#' It works in a similar way to summarise_fp_single, but in this case instead of calculating the false positive rate for
+#' each pipeline it calculates it for groups. If any of the preprocessing pipelines considered in the group is below alpha
+#' then it is considered a false positive.
+#'
+#' Groups are hard coded in the function as they are unlikely to change
+#'
+#' @param d a dataset containing p-values
+#' @param alpha the desired alpha level
 #'
 
   summarise_fp_group = function(d, alpha=.05){
@@ -92,7 +99,9 @@ tide_rename = function(d){
 }
 
 
-#' Figures for the paper
+#' False positive Summary Bar graph
+#'
+#' This function generates the figure#1 of the manuscript
 
 gen_bar_plot = function(fp_single, fp_group){
   ds = fp_single %>%

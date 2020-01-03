@@ -54,16 +54,19 @@ format_stroop = function(in_file, out_file=NULL){
 
 #' Clean real datasets
 #'
-#' Removes selected x% of top and low trials and equalizes the number of trials by resampling trials until the desired number is achieved
+#' Removes selected percentage of top and low trials and equalizes the number of trials by resampling trials until the desired number is achieved
 #'
-#'
+#' @param dirty_d a dirty dataset (Stroop of Flexicon)
+#' @param target_nt we will resample trials from the participant until we reach the desired number of trials
+#' @param trim_top percentage of trials to be trimmed from top of the dataset (calculated using all participants)
+#' @param trim_bottom percentage of trials to be trimmed from the bottom of the dataset (calculated using all participants)
 #'
 
 clean_real = function(dirty_d, target_nt, min_nt, trim_top, trim_bottom){
 
   # Remove percentiles
-  top_cut = quantile(dirty_d[['rt_raw']], .99)
-  bot_cut = quantile(dirty_d[['rt_raw']], .01)
+  top_cut = quantile(dirty_d[['rt_raw']], trim_top)
+  bot_cut = quantile(dirty_d[['rt_raw']], trim_bottom)
   clean_d = dplyr::filter(dirty_d, bot_cut<rt_raw & rt_raw<top_cut)
   logging::logdebug(paste('trimming upper: ', paste0(trim_top*100, '%')),logger='clean_real')
   logging::logdebug(paste('top_cut', top_cut),logger='clean_real')
