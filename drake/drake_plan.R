@@ -13,7 +13,11 @@ suppressMessages(suppressWarnings(library(drake)))
 suppressMessages(suppressWarnings(library(purrr)))
 suppressMessages(suppressWarnings(library(pbapply)))
 suppressMessages(suppressWarnings(library(logging)))
+suppressMessages(suppressWarnings(library(optparse)))
 pboptions(type='none')
+
+loglevel = 10
+basicConfig(level=loglevel)
 
 # Abbreviations
 # st: stroop
@@ -28,8 +32,19 @@ pboptions(type='none')
 # sim_: simulation results
 # fp: false_positives
 
-loglevel = 10
-basicConfig(level=loglevel)
+option_list = list(
+  make_option(c("--outdated"), action="store_true", default=FALSE,
+              help="Create a file with the outdated targets ('outdated.csv')"),
+  make_option(c("--no_make"), action="store_false", default=TRUE,
+              help="Do not build targets", dest="make"),
+  make_option(c("--graph"), action="store_true", default=FALSE,
+              help="Create dependency graph"))
+
+opt = parse_args(OptionParser(option_list=option_list))
+
+loginfo(opt$outdated, handle="drake_plan")
+loginfo(opt$make, handle="drake_plan")
+loginfo(opt$graph, handle="drake_plan")
 
 loginfo('Setting up the directory and environment', logger = 'drake_plan')
 
@@ -233,24 +248,30 @@ plan = drake_plan(
                              compression = "lzw")
 )
 
-loginfo('Setting up the future plan', logger = 'drake_plan')
-future::plan(future::multiprocess)
-
 loginfo('Building config', logger = 'drake_plan')
 cfg = drake_config(plan)
 
-# loginfo('Outdated targets', logger = 'drake_plan')
-#     print.data.frame(outdated(cfg))
-#
-# loginfo('Building dependency graph', logger = 'drake_plan')
-# vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
+if (opt$outdated){
+  loginfo('Outdated targets', logger = 'drake_plan')
+  oted = as.data.frame(outdated(cfg))
+  print.data.frame(outdated(cfg))
+  readr::write_csv(oted, 'outdated.csv')
+}
 
-loginfo('Building targets', logger = 'drake_plan')
-make(plan, parallelism = 'future',
-     jobs = n_jobs,
-     prework = c("devtools::load_all()",
-                 paste0("logging::basicConfig(level=", loglevel,")")),
-     memory_strategy = "autoclean",
-     garbage_collection = TRUE,
-     keep_going = TRUE)
+if(opt$graph){
+  loginfo('Building dependency graph', logger = 'drake_plan')
+  vis_drake_graph(cfg, file = 'dependency_graph.html', selfcontained = TRUE)
+}
 
+if(opt$make){
+  loginfo('Setting up the future plan', logger = 'drake_plan')
+  future::plan(future::multiprocess)
+
+  loginfo('Building targets', logger = 'drake_plan')
+  make(plan, parallelism = 'future',
+       jobs = n_jobs,
+       prework = c(paste0("logging::basicConfig(level=", loglevel,")")),
+       memory_strategy = "autoclean",
+       garbage_collection = TRUE,
+       keep_going = TRUE)
+}
